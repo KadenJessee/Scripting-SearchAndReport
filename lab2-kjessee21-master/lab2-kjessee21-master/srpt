@@ -1,0 +1,50 @@
+#!/bin/bash
+# (Kaden Jessee)
+# Lab2 - Search and Report
+# CS 3030 - Scripting Languages
+
+if [ $# -ne 1 ]; then
+    echo "Usage: srpt FOLDER"
+    exit 1
+fi
+
+# Create a /tmp for temporary files
+mkdir -p "/tmp/$USER"
+
+# Find command and store results in temporary files
+find "$1" \( -type f -fprintf /tmp/$USER/numberoffiles "\n" \) , \( -type d -fprintf /tmp/$USER/numberofdirectories "\n" \) , \( -type l -fprintf /tmp/$USER/numberoflinks "\n" \) , \( -type f -fprintf /tmp/$USER/sizeofallfiles "%s\n" \) , \( -type f \( -name '*.jpg' -o -name '*.bmp' -o -name '*.gif' \) -fprintf /tmp/$USER/numberofgraphicsfiles "\n" \) , \( -type f -mtime +365 -fprintf /tmp/$USER/numberofoldfiles "\n" \) , \( -type f -size +500000c -fprintf /tmp/$USER/numberoflargefiles "\n" \) , \( -type f \( -name '*.o' \) -fprintf /tmp/$USER/numberoftemporaryfiles "\n" \) , \( -type f -executable -fprintf /tmp/$USER/numberofexecutablefiles "\n" \)
+
+# Calculate counts
+directoryCount=$(wc -l < /tmp/$USER/numberofdirectories)
+((directoryCount--)) # decrement for excluding FOLDER
+fileCnt=$(wc -l /tmp/$USER/numberoffiles | cut -d' ' -f 1)
+symLinkCnt=$(wc -l /tmp/$USER/numberoflinks | cut -d' ' -f 1)
+oldFileCnt=$(wc -l /tmp/$USER/numberofoldfiles | cut -d' ' -f 1)
+largeFileCnt=$(wc -l /tmp/$USER/numberoflargefiles | cut -d' ' -f 1)
+graphicsFileCnt=$(wc -l /tmp/$USER/numberofgraphicsfiles | cut -d' ' -f 1) 
+temporaryFileCnt=$(wc -l /tmp/$USER/numberoftemporaryfiles | cut -d' ' -f 1)
+executableFileCnt=$(wc -l /tmp/$USER/numberofexecutablefiles | cut -d' ' -f 1)
+totalSize=$(awk '{tot=tot+$1} END {print tot}' /tmp/$USER/sizeofallfiles)
+
+# Print report
+currentDate=$(date)
+printf "SearchReport %s %s\n" "$(hostname)" "$1" "$currentDate"
+printf "Execution time %d\n" "$SECONDS"
+printf "Directories %'d\n" "$directoryCount"
+printf "Files %'d\n" "$fileCnt"
+printf "Sym links %'d\n" "$symLinkCnt"
+printf "Old files %'d\n" "$oldFileCnt"
+printf "Large files %'d\n" "$largeFileCnt"
+printf "Graphics files %'d\n" "$graphicsFileCnt"
+printf "Temporary files %'d\n" "$temporaryFileCnt"
+printf "Executable files %'d\n" "$executableFileCnt"
+printf "TotalFileSize %'d\n" "$totalSize"
+
+# Clean up temp files
+rm -f "/tmp/$USER/numberoffiles" "/tmp/$USER/numberofdirectories" "/tmp/$USER/numberoflinks" "/tmp/$USER/sizeofallfiles" \
+      "/tmp/$USER/numberofgraphicsfiles" "/tmp/$USER/numberofoldfiles" "/tmp/$USER/numberoflargefiles" \
+      "/tmp/$USER/numberoftemporaryfiles" "/tmp/$USER/numberofexecutablefiles"
+rmdir "/tmp/$USER"
+
+exit 0
+
